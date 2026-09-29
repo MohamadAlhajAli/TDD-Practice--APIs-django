@@ -1,4 +1,4 @@
-# Little Lemon APIs — Django
+# TDD Practice - APIs - Django
 
 A restaurant REST API learning project using Django REST Framework, TDD, and GitHub issues and pull requests.
 
