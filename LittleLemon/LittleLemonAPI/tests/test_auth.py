@@ -33,11 +33,12 @@ class RegistrationTests(APITestCase):
         self.assertFalse(user.groups.exists())
         self.assertNotIn("password", response.data)
 
-    def test_registration_without_email_is_rejected(self):
+    def test_registration_without_email_is_rejected(self): 
+
         payload = {
-            "username": "customer",
-            "password": "Lemon!River82Cloud",
-        }
+            'username': 'customer', 
+            'password': 'Lemon!River82Cloud', 
+        }   
 
         response = self.client.post(
             "/api/users",
@@ -46,12 +47,41 @@ class RegistrationTests(APITestCase):
         )
 
         self.assertEqual(
-            response.status_code,
-            status.HTTP_400_BAD_REQUEST,
+            response.status_code, 
+            status.HTTP_400_BAD_REQUEST, 
         )
-        self.assertIn("email", response.data)
+
+        self.assertIn( "email", response.data) 
+        
         self.assertFalse(
-            get_user_model().objects.filter(
-                username=payload["username"],
-            ).exists()
+              get_user_model().objects.filter(
+                   username = payload['username'], 
+              ).exists()
         )
+    
+    def test_blank_and_invalid_emails_are_rejected(self):
+        for email in ("", "not-an-email", None):
+            with self.subTest(email=email):
+                payload = {
+                    "username": "customer",
+                    "email": email,
+                    "password": "Lemon!River82Cloud",
+                }
+
+                response = self.client.post(
+                    "/api/users",
+                    data=payload,
+                    format="json",
+                )
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertIn("email", response.data)
+                self.assertFalse(
+                    get_user_model().objects.filter(
+                        username=payload["username"],
+                    ).exists()
+                )
+
