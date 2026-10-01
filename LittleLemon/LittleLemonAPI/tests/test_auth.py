@@ -84,4 +84,41 @@ class RegistrationTests(APITestCase):
                         username=payload["username"],
                     ).exists()
                 )
+ 
+    def test_privileged_and_unexpected_fields_are_rejected(self):
+        extra_fields = {
+            "is_staff": True,
+            "is_superuser": True,
+            "groups": [],
+            "unexpected_field": "example",
+        }
 
+        for index, (field, value) in enumerate(extra_fields.items()):
+            with self.subTest(field=field):
+                username = f"customer{index}"
+                payload = {
+                    "username": username,
+                    "email": f"{username}@example.com",
+                    "password": "Lemon!River82Cloud",
+                    field: value,
+                }
+
+                response = self.client.post(
+                    "/api/users",
+                    data=payload,
+                    format="json",
+                )
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertIn(field, response.data)
+                self.assertFalse(
+                    get_user_model().objects.filter(
+                        username=username,
+                    ).exists()
+                )
+          
+
+        
