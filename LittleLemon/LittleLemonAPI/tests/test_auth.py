@@ -120,5 +120,66 @@ class RegistrationTests(APITestCase):
                     ).exists()
                 )
           
+    def test_weak_password_is_rejected(self):
+        payload = {
+            "username": "customer",
+            "email": "customer@example.com",
+            "password": "123",
+        }
 
-        
+        response = self.client.post(
+            "/api/users",
+            data=payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn("password", response.data)
+        self.assertFalse(
+            get_user_model().objects.filter(
+                username=payload["username"],
+            ).exists()
+        )
+
+    def test_duplicate_username_is_rejected(self):
+        existing_user = get_user_model().objects.create_user(
+            username="customer",
+            email="original@example.com",
+            password="Original!River82Cloud",
+        )
+
+        payload = {
+            "username": "customer",
+            "email": "replacement@example.com",
+            "password": "Different!River82Cloud",
+        }
+
+        response = self.client.post(
+            "/api/users",
+            data=payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn("username", response.data)
+        self.assertEqual(
+            get_user_model().objects.filter(
+                username="customer",
+            ).count(),
+            1,
+        )
+
+        existing_user.refresh_from_db()
+        self.assertEqual(
+            existing_user.email,
+            "original@example.com",
+        )
+        self.assertTrue(
+            existing_user.check_password("Original!River82Cloud")
+        )
