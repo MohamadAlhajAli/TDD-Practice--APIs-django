@@ -4,8 +4,8 @@ A restaurant REST API learning project using Django REST Framework, TDD, and Git
 
 ## Current progress
 
-- **Step 0 complete:** Django scaffolding, locked dependencies, environment configuration, and GitHub Actions CI ([issue #2](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/issues/2)).
-- **Step 1 complete:** Category, MenuItem, Cart, Order, and OrderItem models, migrations, database constraints, deletion rules, and admin configuration ([issue #4](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/issues/4)).
+- **Step 0 complete:** Django scaffolding, locked dependencies, environment configuration, and GitHub Actions CI ([issue #2](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/2)).
+- **Step 1 complete:** Category, MenuItem, Cart, Order, and OrderItem models, migrations, database constraints, deletion rules, and admin configuration ([issue #4](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/4)).
 - **Next: Step 2:** registration, token authentication, and a login page. API endpoints are not implemented yet.
 
 Django admin supports managing categories and menu items. Carts, orders, and order items are view-only, including for superusers, so direct admin writes cannot bypass the planned application services.
