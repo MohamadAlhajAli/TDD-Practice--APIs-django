@@ -1,6 +1,10 @@
+from requests import Response
+from time import struct_time
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from rest_framework.authtoken.models import Token 
 
 
 class RegistrationTests(APITestCase):
@@ -145,6 +149,7 @@ class RegistrationTests(APITestCase):
         )
 
     def test_duplicate_username_is_rejected(self):
+        
         existing_user = get_user_model().objects.create_user(
             username="customer",
             email="original@example.com",
@@ -183,3 +188,64 @@ class RegistrationTests(APITestCase):
         self.assertTrue(
             existing_user.check_password("Original!River82Cloud")
         )
+
+class TokenLoginTests(APITestCase):
+    
+    def setUp(self):
+        self.password = "Lemon!River82Cloud"
+        self.user = get_user_model().objects.create_user(
+            username="customer",
+            email="customer@example.com",
+            password=self.password,
+        )
+
+    def test_valid_credentials_return_user_token(self):
+        response = self.client.post(
+            "/token/login/",
+            data={
+                "username": self.user.username,
+                "password": self.password,
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertIn("auth_token", response.data)
+
+        token = Token.objects.get(
+            key=response.data["auth_token"],
+        )
+        self.assertEqual(token.user_id, self.user.pk)
+    
+    def test_invalid_credentials_are_rejected(self):
+        invalid_credentials = [
+            {
+                "username": self.user.username,
+                "password": "Wrong!Password82",
+            },
+            {
+                "username": "unknown-user",
+                "password": self.password,
+            },
+        ]
+
+        for credentials in invalid_credentials:
+            with self.subTest(username=credentials["username"]):
+                response = self.client.post(
+                    "/token/login/",
+                    data=credentials,
+                    format="json",
+                )
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_400_BAD_REQUEST,
+                )
+                self.assertNotIn("auth_token", response.data)
+                self.assertFalse(Token.objects.exists())
+
+        
+
