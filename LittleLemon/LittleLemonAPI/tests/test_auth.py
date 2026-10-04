@@ -297,6 +297,25 @@ class CurrentUserTests(APITestCase):
         self.assertNotIn("username", response.data)
 
 
+    def test_session_login_without_token_is_rejected(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_staff"])
+
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/users/users/me/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.assertEqual(response["WWW-Authenticate"], "Token")
+        self.assertNotIn("username", response.data)
+    
+    
+
+
+
         
     
 
