@@ -272,7 +272,6 @@ class CurrentUserTests(APITestCase):
         self.assertEqual(response.data["email"], self.user.email)
         self.assertNotIn("password", response.data)
     
-
     def test_missing_token_is_rejected(self):
         response = self.client.get("/api/users/users/me/")
 
@@ -296,7 +295,6 @@ class CurrentUserTests(APITestCase):
         )
         self.assertNotIn("username", response.data)
 
-
     def test_session_login_without_token_is_rejected(self):
         self.user.is_staff = True
         self.user.save(update_fields=["is_staff"])
@@ -312,10 +310,47 @@ class CurrentUserTests(APITestCase):
         self.assertEqual(response["WWW-Authenticate"], "Token")
         self.assertNotIn("username", response.data)
     
-    
+    def test_current_user_endpoint_rejects_write_methods(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Token {self.token.key}",
+        )
 
+        for method in ("post", "put", "patch", "delete"):
+            with self.subTest(method=method):
+                send_request = getattr(self.client, method)
 
+                response = send_request(
+                    "/api/users/users/me/",
+                    data={},
+                    format="json",
+                )
 
-        
-    
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_405_METHOD_NOT_ALLOWED,
+                )
 
+        self.assertTrue(
+            get_user_model().objects.filter(pk=self.user.pk).exists()
+        )
+
+    def test_unintended_user_routes_are_not_exposed(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Token {self.token.key}",
+        )
+
+        paths = [
+            "/api/users/",
+            "/api/users/users/",
+            f"/api/users/{self.user.pk}/",
+            f"/api/users/users/{self.user.pk}/",
+        ]
+
+        for path in paths:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_404_NOT_FOUND,
+                )
