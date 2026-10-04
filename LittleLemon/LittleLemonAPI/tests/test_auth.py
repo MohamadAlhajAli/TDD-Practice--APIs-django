@@ -247,5 +247,56 @@ class TokenLoginTests(APITestCase):
                 self.assertNotIn("auth_token", response.data)
                 self.assertFalse(Token.objects.exists())
 
+class CurrentUserTests(APITestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="customer",
+            email="customer@example.com",
+            password="Lemon!River82Cloud",
+        )
+        self.token = Token.objects.create(user=self.user)
+
+    def test_valid_token_returns_current_user(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Token {self.token.key}",
+        )
+
+        response = self.client.get("/api/users/users/me/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(response.data["id"], self.user.pk)
+        self.assertEqual(response.data["username"], self.user.username)
+        self.assertEqual(response.data["email"], self.user.email)
+        self.assertNotIn("password", response.data)
+    
+
+    def test_missing_token_is_rejected(self):
+        response = self.client.get("/api/users/users/me/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.assertEqual(response["WWW-Authenticate"], "Token")
+        self.assertNotIn("username", response.data)
+    
+    def test_invalid_token_is_rejected(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION="Token invalid-token",
+        )
+
+        response = self.client.get("/api/users/users/me/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED,
+        )
+        self.assertNotIn("username", response.data)
+
+
         
+    
 

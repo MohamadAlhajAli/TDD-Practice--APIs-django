@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from djoser.views import UserViewSet
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
 class RegistrationView(UserViewSet):
@@ -9,3 +9,13 @@ class RegistrationView(UserViewSet):
 
     def get_permissions(self):
         return [AllowAny()]
+    
+class CurrentUserView(UserViewSet):
+    http_method_names = ["get", "head", "options"]
+
+    def get_permissions(self):
+        return [IsAuthenticated()]
+    
+
+
+
