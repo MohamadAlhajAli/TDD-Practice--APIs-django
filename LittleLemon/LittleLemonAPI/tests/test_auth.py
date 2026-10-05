@@ -188,6 +188,19 @@ class RegistrationTests(APITestCase):
         self.assertTrue(
             existing_user.check_password("Original!River82Cloud")
         )
+    
+    def test_registration_rejects_unsupported_methods(self): 
+        
+        for method in ("get", "put", "patch", "delete"): 
+            with self.subTest(method=method): 
+                response = getattr(self.client, method)("/api/users") 
+
+                self.assertEqual(
+                    response.status_code, 
+                    status.HTTP_405_METHOD_NOT_ALLOWED, 
+                )
+
+                
 
 class TokenLoginTests(APITestCase):
     
@@ -246,6 +259,19 @@ class TokenLoginTests(APITestCase):
                 )
                 self.assertNotIn("auth_token", response.data)
                 self.assertFalse(Token.objects.exists())
+    
+    def test_token_login_rejects_unsupported_methods(self):
+        for method in ("get", "put", "patch", "delete"):
+            with self.subTest(method=method):
+                response = getattr(self.client, method)("/token/login/")
+
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_405_METHOD_NOT_ALLOWED,
+                )
+    
+
+
 
 class CurrentUserTests(APITestCase):
     def setUp(self):
