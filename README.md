@@ -4,9 +4,10 @@ A restaurant REST API learning project using Django REST Framework, TDD, and Git
 
 ## Current progress
 
-- **Step 0 complete:** Django scaffolding, locked dependencies, environment configuration, and GitHub Actions CI ([issue #2](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/issues/2)).
-- **Step 1 complete:** Category, MenuItem, Cart, Order, and OrderItem models, migrations, database constraints, deletion rules, and admin configuration ([issue #4](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/issues/4)).
-- **Next: Step 2:** registration, token authentication, and a login page. API endpoints are not implemented yet.
+- **Step 0 complete:** Django scaffolding, locked dependencies, environment configuration, and GitHub Actions CI ([issue #2](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/2)).
+- **Step 1 complete:** Category, MenuItem, Cart, Order, and OrderItem models, migrations, database constraints, deletion rules, and admin configuration ([issue #4](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/4)).
+- **Step 2 implemented and verified; awaiting merge:** registration, token authentication, the current-user endpoint, and a development login page ([issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13), [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14)).
+- **Next after merge: Step 3:** roles and reusable permissions. Menu, cart, and order API endpoints remain planned work.
 
 Django admin supports managing categories and menu items. Carts, orders, and order items are view-only, including for superusers, so direct admin writes cannot bypass the planned application services.
 
@@ -47,6 +48,21 @@ python -m pipenv run python manage.py runserver
 
 Create a superuser once per local database; skip that command if you already have an account. Open [Django admin](http://127.0.0.1:8000/admin/) and sign in. No homepage is configured at `/` yet. Stop the server with **Ctrl+C**.
 
+Open the [development login page](http://127.0.0.1:8000/login/) to test token login with an existing local account, including your superuser. It exchanges credentials for a token, requests the current user's details, and displays their username. Tokens are kept only in page memory, never saved to browser storage, URLs, or logs. Refreshing clears the displayed login result; it does not revoke the server-side token. Accounts created by automated tests are separate from your local development accounts.
+
+## Authentication endpoints
+
+| Method | Path | Behavior |
+|---|---|---|
+| POST | `/api/users` | Register with username, email, and password; returns 201. Invalid input or unexpected fields return 400. |
+| POST | `/token/login/` | Exchange valid credentials for `auth_token`; incorrect credentials return 400. |
+| GET | `/api/users/users/me/` | Return the token owner's details; missing or invalid tokens return 401. |
+| GET | `/login/` | Display the public development login form. |
+
+Preserve the trailing slashes exactly as shown. Protected API requests use `Authorization: Token <auth_token>`, not a Bearer header. A Django admin session alone does not authenticate API requests. Registration and token login are public; API permissions otherwise require authentication by default. Full Djoser user-management routes are not included.
+
+## Sample catalog and environment
+
 For a sample catalog, use admin to create two categories (for example, Main Courses and Desserts) and six menu items. These records belong to your local SQLite database and are not included in Git; a fresh setup starts without sample data.
 
 Pipenv may place the virtual environment under your user profile. Run `python -m pipenv --venv` to locate it. There is no need to activate it when using `pipenv run`.
@@ -64,7 +80,9 @@ python -m pipenv run python manage.py makemigrations --check --dry-run
 python -m pipenv run python manage.py test
 ```
 
-The current suite contains 35 tests: 29 model tests in `test_models.py` and six admin tests in `test_admin.py`. They cover persistence, constraints, deletion rules, saved order-item prices, and admin access restrictions. API authentication and endpoint tests will be added in subsequent steps.
+The current suite contains 52 tests: 29 model tests in `test_models.py`, six admin tests in `test_admin.py`, and 17 authentication and page tests in `test_auth.py`. They cover model behavior, admin permissions, registration validation, token login, current-user access, restricted methods and routes, and the login form's HTML.
+
+Browser checks have also passed for successful login, incorrect credentials, and clearing the displayed result on refresh. Django's page test does not execute JavaScript; the browser checks verify the form's request flow.
 
 For detailed output, use `python -m pipenv run python manage.py test --verbosity 2`. GitHub Actions runs dependency checks, Django system checks, migration drift checks, migration application, and tests on pull requests targeting `main` and pushes to `main`.
 
@@ -85,4 +103,4 @@ Track a small change in an issue, work on a branch, follow TDD for application b
 
 Keep related commits in one pull request. After merging, start the next branch from updated `main` instead of reusing a branch that was squash-merged. Delete completed branches after confirming their changes are merged. Keep committed migrations so other checkouts can reproduce the database schema.
 
-Future roles are Customer, Manager, and Delivery crew. Registration and token login arrive in Step 2; role setup arrives in Step 3. Endpoint contracts are in the requirements document.
+Future roles are Customer, Manager, and Delivery crew. Registration and token login are implemented on the Step 2 branch awaiting PR #14 merge; role setup arrives in Step 3. Endpoint contracts are in the requirements document.

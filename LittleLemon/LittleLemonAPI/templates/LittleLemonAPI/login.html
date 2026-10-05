@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Little Lemon login</title>
+</head>
+
+<body>
+    <h1>Log in</h1>
+
+    <form id="login-form" method="post" action="{% url 'token-login' %}">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <button type="submit">Log in</button>
+    </form>
+
+    <p id="login-message" role="status" aria-live="polite"></p>
+
+    <script>
+        const form = document.getElementById("login-form");
+        const message = document.getElementById("login-message");
+        const button = form.querySelector('button[type="submit"]');
+        const passwordInput = document.getElementById("password");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            message.textContent = "Logging in...";
+            button.disabled = true;
+
+            try {
+                const loginResponse = await fetch(form.action, {
+                    method: "POST",
+                    credentials: "omit",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById("username").value,
+                        password: passwordInput.value,
+                    }),
+                });
+
+                passwordInput.value = "";
+
+                if (!loginResponse.ok) {
+                    throw new Error(
+                        loginResponse.status === 400
+                            ? "Login failed. Check your username and password."
+                            : "Unable to log in. Please try again."
+                    );
+                }
+
+                const loginData = await loginResponse.json();
+
+                const userResponse = await fetch(
+                    "{% url 'current-user' %}",
+                    {
+                        credentials: "omit",
+                        cache: "no-store",
+                        headers: {
+                            Authorization: `Token ${loginData.auth_token}`,
+                        },
+                    }
+                );
+
+                if (!userResponse.ok) {
+                    throw new Error("Unable to load your user details.");
+                }
+
+                const user = await userResponse.json();
+                message.textContent = `Logged in as ${user.username}.`;
+            } catch (error) {
+                message.textContent =
+                    error instanceof TypeError
+                        ? "Could not connect. Please try again."
+                        : error.message;
+            } finally {
+                passwordInput.value = "";
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

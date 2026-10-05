@@ -3,7 +3,7 @@
 **Companions:** `01 SRS - Software Requirements Specification.md` and `02 Design Document.md`
 **Version:** 1.2
 **Reviewed:** 2026-09-23
-**Status:** Step 0 in progress; feature implementation not started
+**Status:** Steps 0–1 complete; Step 2 implemented and verified, awaiting PR #14 merge
 
 **How we will work:** explain one small behavior, write and run a failing test, implement the minimum to pass, then refactor with tests passing. Work through one step at a time and pause for your next instruction. Each feature also practices the GitHub issue → branch → commit → pull request → review → merge workflow. Step 12 is a final audit; tests lead development from Step 1 onward.
 
@@ -15,9 +15,9 @@ The SRS defines behavior. If a course requirement changes a decision, update all
 
 | Step | Title | Depends on | Status | Evidence |
 |---|---|---|---|---|
-| 0 | Environment and scaffold | — | Completed | Python 3.14.4, Django 5.2.17; system check and initial migrations pass; no migration drift; runner discovers 0 tests as expected |
-| 1 | Models, migrations, admin | 0 | Completed | — |
-| 2 | Djoser registration, tokens, login page | 1 | In Progress | — |
+| 0 | Environment and scaffold | — | Completed | Python 3.14.4, Django 5.2.17; locked dependencies, environment setup, migrations, and GitHub CI configured |
+| 1 | Models, migrations, admin | 0 | Completed | 29 model tests and six admin tests; migrations and manual admin checks passed; sample catalog created locally |
+| 2 | Djoser registration, tokens, login page | 1 | Implemented; awaiting merge | 52 tests passed overall, including 17 authentication/page tests; no migration drift; browser login checks passed; [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) for [issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13) |
 | 3 | Roles and permissions | 1, 2 | ☐ Not started | — |
 | 4 | Menu endpoints | 1, 3 | ☐ Not started | — |
 | 5 | Group management | 3 | ☐ Not started | — |
@@ -47,7 +47,7 @@ Use Django TestCase/APITestCase and plain unittest assertions initially. Avoid a
 
 ## GitHub Practice Before Step 0
 
-**Repository setup progress:** this folder is connected to [LittleLemon-APIs-django](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django), with `main` tracking `origin/main`. [PR #1](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/pull/1) was merged with merge commit `38d4207`, preserving the existing README history. [Issue #2](https://github.com/MohamadAlhajAli/LittleLemon-APIs-django/issues/2) tracks Step 0 on `chore/2-project-scaffold`. Root ignore rules, the Django scaffold, local environment configuration and test package are prepared; the browser startup check, issue/PR templates, CI and scaffold PR remain. Git is installed; the `gh` CLI was not found on PATH. We use Git Bash and the GitHub website.
+**Repository setup progress:** this folder is connected to [TDD-Practice--APIs-django](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django), with `main` tracking `origin/main`. Planning and scaffold work were merged, preserving the existing history. Root ignore rules, environment configuration, issue/PR templates, and CI are in place. Steps 0–1 are complete. Authentication work is on `feat/13-authentication`, with [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) awaiting merge. We use Git Bash and the GitHub website for the guided workflow.
 
 **Guided practice:** explain each command, what it changes and what output to inspect. Give the user small command batches to execute and help interpret the output. Keep GitHub exercises visible instead of silently completing the entire collaboration workflow. The user can ask the assistant to execute a batch when preferred.
 
@@ -196,13 +196,15 @@ pipenv run python manage.py test LittleLemonAPI.tests.test_models
 
 **Acceptance checks**
 
-- ☐ `POST /api/users` with valid username/email/password → 201
-- ☐ Missing/invalid email, weak password, duplicate username or privilege fields → 400
-- ☐ `POST /token/login/` with correct credentials → 200 and `auth_token`; wrong credentials → 400
-- ☐ `GET /api/users/users/me/` with token → 200; missing/invalid token → 401
-- ☐ Registration creates a normal user without role groups
-- ☐ The HTML page handles success and failure; it does not persist or log tokens
-- ☐ Requests hit the exact URLs without relying on redirects
+- [x] `POST /api/users` with valid username/email/password → 201
+- [x] Missing/invalid email, weak password, duplicate username or privilege fields → 400
+- [x] `POST /token/login/` with correct credentials → 200 and `auth_token`; wrong credentials → 400
+- [x] `GET /api/users/users/me/` with token → 200; missing/invalid token → 401
+- [x] Registration creates a normal user without role groups
+- [x] The HTML page handles success and failure; it does not persist or log tokens
+- [x] Requests hit the exact URLs without relying on redirects
+
+**Verification evidence:** the user reported 52 passing tests and no missing migrations. The 17 tests in `test_auth.py` cover registration, token login, current-user authentication, method/route restrictions, and the login form's HTML. Manual browser checks passed for valid credentials, invalid credentials, and clearing the displayed login result on refresh. The JavaScript flow was checked manually; Django's test client does not execute it. GitHub CI passed for the reviewed PR revision; confirm it passes again after the final cleanup commit. PR #14 has not been merged yet.
 
 **Manual sequence**
 
@@ -521,4 +523,4 @@ Debug Toolbar is an optional aid for suitable HTML responses; automated query me
 - ☐ Application behaviors were developed through observed Red → Green → Refactor cycles
 - ☐ GitHub issues, branches, reviewed PRs and passing CI record the development history
 
-**Next action:** verify the development server in the browser, then add issue/PR templates and CI before submitting the scaffold PR for issue #2. Do not mark Step 0 complete until its remaining acceptance checks pass.
+**Next action:** commit and push the final Step 2 documentation/import cleanup, wait for CI on the latest PR #14 commit, and merge after review. Then synchronize local `main`, mark Step 2 merged, and start Step 3 on a new issue branch.
