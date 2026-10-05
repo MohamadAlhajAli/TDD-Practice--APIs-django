@@ -3,7 +3,7 @@
 **Companions:** `01 SRS - Software Requirements Specification.md` and `02 Design Document.md`
 **Version:** 1.2
 **Reviewed:** 2026-09-23
-**Status:** Steps 0–1 complete; Step 2 implemented and verified, awaiting PR #14 merge
+**Status:** Steps 0–2 complete; Step 3 implemented and verified, awaiting review
 
 **How we will work:** explain one small behavior, write and run a failing test, implement the minimum to pass, then refactor with tests passing. Work through one step at a time and pause for your next instruction. Each feature also practices the GitHub issue → branch → commit → pull request → review → merge workflow. Step 12 is a final audit; tests lead development from Step 1 onward.
 
@@ -17,8 +17,8 @@ The SRS defines behavior. If a course requirement changes a decision, update all
 |---|---|---|---|---|
 | 0 | Environment and scaffold | — | Completed | Python 3.14.4, Django 5.2.17; locked dependencies, environment setup, migrations, and GitHub CI configured |
 | 1 | Models, migrations, admin | 0 | Completed | 29 model tests and six admin tests; migrations and manual admin checks passed; sample catalog created locally |
-| 2 | Djoser registration, tokens, login page | 1 | Implemented; awaiting merge | 52 tests passed overall, including 17 authentication/page tests; no migration drift; browser login checks passed; [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) for [issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13) |
-| 3 | Roles and permissions | 1, 2 | ☐ Not started | — |
+| 2 | Djoser registration, tokens, login page | 1 | Completed | 17 authentication/page tests, no migration drift, browser login checks; merged [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) for [issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13) |
+| 3 | Roles and permissions | 1, 2 | Implemented; awaiting review | 64 tests pass overall, including 12 role/permission tests; local users `ana`, `ben`, `maria`, `sam`, and `lee` resolved to expected roles; [issue #15](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/15) |
 | 4 | Menu endpoints | 1, 3 | ☐ Not started | — |
 | 5 | Group management | 3 | ☐ Not started | — |
 | 6 | Cart endpoints | 1, 3, 4 | ☐ Not started | — |
@@ -233,10 +233,12 @@ Use a manual `Authorization: Token ...` header in Postman/Insomnia. A Bearer hea
 
 **Acceptance checks**
 
-- ☐ Superuser and Manager resolve to Manager; Delivery member resolves to Delivery
-- ☐ Staff-only and unrelated-group users resolve to Customer
-- ☐ Accidental dual membership resolves to Manager consistently
-- ☐ Anonymous protected access → 401; authenticated wrong role → 403
+- [x] Superuser and Manager resolve to Manager; Delivery member resolves to Delivery
+- [x] Staff-only and unrelated-group users resolve to Customer
+- [x] Accidental dual membership resolves to Manager consistently
+- [x] Anonymous protected access → 401; authenticated wrong role → 403
+
+The role resolver and three permission classes are covered by `test_permissions.py`, including a test-local DRF view for 401, 403, and 200 responses. No permanent test endpoint was added. The `Manager` and `Delivery crew` groups and five sample users were created only in the local development database; tests create their own fixtures.
 
 **Checkpoint:** what is the difference between authenticating a caller, authorizing a method and limiting visible rows?
 
@@ -523,4 +525,4 @@ Debug Toolbar is an optional aid for suitable HTML responses; automated query me
 - ☐ Application behaviors were developed through observed Red → Green → Refactor cycles
 - ☐ GitHub issues, branches, reviewed PRs and passing CI record the development history
 
-**Next action:** commit and push the final Step 2 documentation/import cleanup, wait for CI on the latest PR #14 commit, and merge after review. Then synchronize local `main`, mark Step 2 merged, and start Step 3 on a new issue branch.
+**Next action:** commit and push the Step 3 progress update on `feat/15-roles-permissions`, open a pull request for issue #15, review CI and the diff, then merge. Synchronize local `main` before starting Step 4 on a new issue branch.
