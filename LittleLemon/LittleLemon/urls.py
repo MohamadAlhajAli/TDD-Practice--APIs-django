@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import path
 
-from LittleLemonAPI.views import RegistrationView, CurrentUserView
+from LittleLemonAPI.views import RegistrationView, CurrentUserView, login_page
 from djoser.views import TokenCreateView
+ 
 
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
         CurrentUserView.as_view({"get": "me"}),
         name="current-user",
     ),
+    path("login/", login_page, name="login-page"),
 ]

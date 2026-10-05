@@ -335,6 +335,7 @@ class CurrentUserTests(APITestCase):
         )
 
     def test_unintended_user_routes_are_not_exposed(self):
+
         self.client.credentials(
             HTTP_AUTHORIZATION=f"Token {self.token.key}",
         )
@@ -354,3 +355,17 @@ class CurrentUserTests(APITestCase):
                     response.status_code,
                     status.HTTP_404_NOT_FOUND,
                 )
+
+class LoginPageTests(APITestCase):
+    def test_login_page_displays_username_password_form(self):
+        response = self.client.get("/login/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'type="submit"')
+
+
+
+
+

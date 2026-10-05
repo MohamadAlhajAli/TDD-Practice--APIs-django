@@ -16,6 +16,10 @@ class CurrentUserView(UserViewSet):
     def get_permissions(self):
         return [IsAuthenticated()]
     
+def login_page(request):
+    return render(request, "LittleLemonAPI/login.html")
+
+
 
 
 
