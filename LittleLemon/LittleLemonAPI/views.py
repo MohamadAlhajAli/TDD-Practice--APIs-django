@@ -3,7 +3,7 @@ from django.shortcuts import render
 from djoser.views import UserViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated 
 from LittleLemonAPI.permissions import IsManagerOrReadOnly 
-from rest_framework.generics import ListAPIView  
+from rest_framework.generics import ListCreateAPIView
 from LittleLemonAPI.models import MenuItem  
 from LittleLemonAPI.serializers import MenuItemSerializer
 
@@ -25,13 +25,11 @@ def login_page(request):
 
 # --------- MenuItem  ------------ 
 
-class MenuItemsView(ListAPIView): 
+class MenuItemsView(ListCreateAPIView): 
 
     queryset = MenuItem.objects.select_related("category")  
     serializer_class = MenuItemSerializer 
     permission_classes = [IsManagerOrReadOnly]
-
-
 
 
 
