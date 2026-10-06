@@ -65,7 +65,7 @@ class MenuCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         item = MenuItem.objects.get(title="Lemon cake")
         self.assertEqual(item.category, category)
-    
+
     def test_customer_cannot_create_menu_item(self):
         customer = get_user_model().objects.create_user(username="customer")
         category = Category.objects.create(
@@ -111,7 +111,7 @@ class MenuCreateTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("unexpected", response.data)
-        self.assertFalse(MenuItem.objects.exists())    
+        self.assertFalse(MenuItem.objects.exists())
 
     def test_negative_price_is_rejected(self):
         manager = get_user_model().objects.create_user(username="manager")
@@ -135,8 +135,8 @@ class MenuCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("price", response.data)
         self.assertFalse(MenuItem.objects.exists())
-    
-    def test_invalid_create_fields_are_rejected(self): 
+
+    def test_invalid_create_fields_are_rejected(self):
         manager = get_user_model().objects.create_user(username="manager")
         manager.groups.add(Group.objects.create(name="Manager"))
 
@@ -292,7 +292,7 @@ class MenuDetailTests(APITestCase):
         self.assertIn("detail", response.data)
         self.assertTrue(MenuItem.objects.filter(pk=item.pk).exists())
         self.assertTrue(OrderItem.objects.filter(pk=order_item.pk).exists())
-            
+
     def test_deleting_menu_item_removes_its_cart_rows(self):
         manager = get_user_model().objects.create_user(username="manager")
         manager.groups.add(Group.objects.create(name="Manager"))
@@ -570,6 +570,4 @@ class MenuAccessTests(APITestCase):
                 self.assertEqual(self.item.category_id, self.category.pk)
 
         self.assertEqual(MenuItem.objects.count(), 1)
-
-
 

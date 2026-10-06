@@ -1,7 +1,7 @@
-from decimal import Decimal 
+from decimal import Decimal
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-from LittleLemonAPI.models import MenuItem, Category 
+from LittleLemonAPI.models import MenuItem, Category
 
 class RegistrationSerializer(UserCreateSerializer):
     email = serializers.EmailField(
@@ -24,20 +24,20 @@ class RegistrationSerializer(UserCreateSerializer):
         return super().to_internal_value(data)
 
 
-class CategorySerializer(serializers.ModelSerializer): 
-    class Meta: 
-        model = Category 
-        fields = ["id", "title", "slug"] 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "title", "slug"]
 
-class MenuItemSerializer(serializers.ModelSerializer): 
-    category = CategorySerializer(read_only = True) 
+class MenuItemSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only = True)
     category_id = serializers.PrimaryKeyRelatedField(
         source="category",
         queryset=Category.objects.all(),
         write_only=True,
     )
     price = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=Decimal("0.00"), max_value=Decimal("9999.99"),)
-    
+
     def to_internal_value(self, data):
         if isinstance(data, dict):
             allowed_fields = {"title", "price", "featured", "category_id"}
@@ -59,8 +59,6 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(data)
 
-    class Meta: 
-        model = MenuItem 
-        fields = ["id", "title", "price", "featured", "category", "category_id"]  
-    
-        
+    class Meta:
+        model = MenuItem
+        fields = ["id", "title", "price", "featured", "category", "category_id"]
