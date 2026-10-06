@@ -1,4 +1,4 @@
-from dataclasses import field
+from decimal import Decimal 
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 from LittleLemonAPI.models import MenuItem, Category 
@@ -36,6 +36,7 @@ class MenuItemSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
         write_only=True,
     )
+    price = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=Decimal("0.00"), max_value=Decimal("9999.99"),)
     
     def to_internal_value(self, data):
         if isinstance(data, dict):

@@ -45,7 +45,7 @@ class SingleMenuItemView(RetrieveUpdateDestroyAPIView):
             super().destroy(request, *args, **kwargs)
         except ProtectedError: 
             return Response(
-                {"detail": "Cannot delet a menu item used in an order."},
+                {"detail": "Cannot delete a menu item used in an order."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         

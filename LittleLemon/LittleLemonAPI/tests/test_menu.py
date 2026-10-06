@@ -112,6 +112,64 @@ class MenuCreateTests(APITestCase):
         self.assertIn("unexpected", response.data)
         self.assertFalse(MenuItem.objects.exists())    
 
+    def test_negative_price_is_rejected(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Desserts",
+            slug="desserts",
+        )
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.post(
+            "/api/menu-items",
+            {
+                "title": "Lemon cake",
+                "price": "-0.01",
+                "category_id": category.id,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("price", response.data)
+        self.assertFalse(MenuItem.objects.exists())
+    
+    def test_invalid_create_fields_are_rejected(self): 
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+
+        category = Category.objects.create(
+            title="Desserts",
+            slug="desserts",
+        )
+        self.client.force_authenticate(user=manager)
+
+        valid_payload = {
+            "title": "Lemon cake",
+            "price": "8.50",
+            "category_id": category.id,
+        }
+        cases = [
+            ({"title": ""}, "title"),
+            ({"price": "10000.00"}, "price"),
+            ({"price": "8.555"}, "price"),
+            ({"category_id": 999999}, "category_id"),
+        ]
+
+        for changes, field in cases:
+            with self.subTest(changes=changes):
+                payload = valid_payload.copy()
+                payload.update(changes)
+                response = self.client.post(
+                    "/api/menu-items", payload, format="json"
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn(field, response.data)
+                self.assertFalse(MenuItem.objects.exists())
+
+
 class MenuDetailTests(APITestCase):
     def test_authenticated_user_can_retrieve_menu_item(self):
         user = get_user_model().objects.create_user(username="customer")
