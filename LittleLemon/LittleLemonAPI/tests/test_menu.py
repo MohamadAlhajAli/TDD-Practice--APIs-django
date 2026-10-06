@@ -570,4 +570,3 @@ class MenuAccessTests(APITestCase):
                 self.assertEqual(self.item.category_id, self.category.pk)
 
         self.assertEqual(MenuItem.objects.count(), 1)
-
