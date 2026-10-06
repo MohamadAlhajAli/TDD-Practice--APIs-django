@@ -7,7 +7,8 @@ A restaurant REST API learning project using Django REST Framework, TDD, and Git
 - **Step 0 complete:** Django scaffolding, locked dependencies, environment configuration, and GitHub Actions CI ([issue #2](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/2)).
 - **Step 1 complete:** Category, MenuItem, Cart, Order, and OrderItem models, migrations, database constraints, deletion rules, and admin configuration ([issue #4](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/4)).
 - **Step 2 complete:** registration, token authentication, the current-user endpoint, and a development login page ([issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13), [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14)).
-- **Step 3 implemented and verified; awaiting review:** a shared role resolver and reusable Manager, Delivery crew, and authenticated-read/Manager-write permissions ([issue #15](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/15)). Menu, cart, and order API endpoints remain planned work.
+- **Step 3 complete:** a shared role resolver and reusable Manager, Delivery crew, and authenticated-read/Manager-write permissions ([issue #15](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/15), [PR #16](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/16)).
+- **Step 4 implemented and verified; awaiting review:** authenticated menu list and detail endpoints with Manager writes, validation, and deletion rules ([issue #17](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/17), [PR #18](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/18)). Cart and order API endpoints remain planned work.
 
 Django admin supports managing categories and menu items. Carts, orders, and order items are view-only, including for superusers, so direct admin writes cannot bypass the planned application services.
 
@@ -61,6 +62,17 @@ Open the [development login page](http://127.0.0.1:8000/login/) to test token lo
 
 Preserve the trailing slashes exactly as shown. Protected API requests use `Authorization: Token <auth_token>`, not a Bearer header. A Django admin session alone does not authenticate API requests. Registration and token login are public; API permissions otherwise require authentication by default. Full Djoser user-management routes are not included.
 
+## Menu endpoints
+
+Both menu routes require a token. Customers and Delivery crew can read menu items; Manager group members and superusers can also write them.
+
+| Method | Path | Behavior |
+|---|---|---|
+| GET / POST | `/api/menu-items` | List items (200); Manager creates an item (201). |
+| GET / PUT / PATCH / DELETE | `/api/menu-items/{id}` | Retrieve (200); Manager replaces, partially updates, or deletes an item (200). |
+
+Responses include each item's `id`, `title`, decimal-string `price`, `featured` flag, and nested category (`id`, `title`, `slug`). Writes use `category_id`; `featured` defaults to false on creation, while PUT requires all four writable fields. Invalid or unexpected fields return 400. Deleting an item used in an order returns 400 and preserves order history; deleting one used only in carts removes those cart rows.
+
 ## Sample catalog and environment
 
 For a sample catalog, use admin to create two categories (for example, Main Courses and Desserts) and six menu items. These records belong to your local SQLite database and are not included in Git; a fresh setup starts without sample data.
@@ -80,7 +92,7 @@ python -m pipenv run python manage.py makemigrations --check --dry-run
 python -m pipenv run python manage.py test
 ```
 
-The current suite contains 64 tests: 29 model tests in `test_models.py`, six admin tests in `test_admin.py`, 17 authentication and page tests in `test_auth.py`, and 12 role and permission tests in `test_permissions.py`. They cover model behavior, admin permissions, registration validation, token login, current-user access, restricted methods and routes, role resolution, DRF permission decisions and responses, and the login form's HTML.
+The current suite contains 84 tests: 29 model tests in `test_models.py`, six admin tests in `test_admin.py`, 17 authentication and page tests in `test_auth.py`, 12 role and permission tests in `test_permissions.py`, and 20 menu endpoint tests in `test_menu.py`. They cover model behavior, admin permissions, authentication, the login form, role decisions, menu access by role, validation, and deletion rules.
 
 Browser checks have also passed for successful login, incorrect credentials, and clearing the displayed result on refresh. Django's page test does not execute JavaScript; the browser checks verify the form's request flow.
 
@@ -103,4 +115,4 @@ Track a small change in an issue, work on a branch, follow TDD for application b
 
 Keep related commits in one pull request. After merging, start the next branch from updated `main` instead of reusing a branch that was squash-merged. Delete completed branches after confirming their changes are merged. Keep committed migrations so other checkouts can reproduce the database schema.
 
-Step 3 defines Customer, Manager, and Delivery crew roles. Superusers resolve to Manager; staff status alone does not grant a role. The two role groups and five sample users were created in the local database for manual checks and are not part of Git. Menu, cart, and order endpoint contracts are in the requirements document.
+Step 3 defines Customer, Manager, and Delivery crew roles. Superusers resolve to Manager; staff status alone does not grant a role. The two role groups and five sample users were created in the local database for manual checks and are not part of Git. Cart and order endpoint contracts remain in the requirements document for later steps.
