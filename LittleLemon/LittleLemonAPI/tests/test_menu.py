@@ -14,17 +14,29 @@ class MenuListTests(APITestCase):
             title="Main courses",
             slug="main-courses",
         )
-        MenuItem.objects.create(
+        item = MenuItem.objects.create(
             title="Grilled fish",
             price=Decimal("15.50"),
             category=category,
         )
+
         self.client.force_authenticate(user=user)
 
         response = self.client.get("/api/menu-items")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["title"], "Grilled fish")
-
-
+        self.assertEqual(
+            response.data[0],
+            {
+                "id": item.id,
+                "title": "Grilled fish",
+                "price": "15.50",
+                "featured": False,
+                "category": {
+                    "id": category.id,
+                    "title": "Main courses",
+                    "slug": "main-courses",
+                },
+            },
+        )
 

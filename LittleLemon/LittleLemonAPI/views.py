@@ -27,10 +27,11 @@ def login_page(request):
 
 class MenuItemsView(ListAPIView): 
 
-    queryset = MenuItem.objects.all() 
+    queryset = MenuItem.objects.select_related("category")  
     serializer_class = MenuItemSerializer 
     permission_classes = [IsManagerOrReadOnly]
-     
+
+
 
 
 
