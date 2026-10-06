@@ -1,6 +1,6 @@
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-
+from LittleLemonAPI.models import MenuItem 
 
 class RegistrationSerializer(UserCreateSerializer):
     email = serializers.EmailField(
@@ -21,3 +21,10 @@ class RegistrationSerializer(UserCreateSerializer):
                 })
 
         return super().to_internal_value(data)
+
+
+class MenuItemSerializer(serializers.ModelSerializer): 
+    class Meta: 
+        model = MenuItem 
+        fields = ["id", "title"] 
+        
