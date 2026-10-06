@@ -48,8 +48,15 @@ class MenuItemSerializer(serializers.ModelSerializer):
                     for field in sorted(unexpected_fields)
                 })
 
-        return super().to_internal_value(data)
+            if self.instance is not None and not self.partial:
+                missing_fields = allowed_fields - set(data)
+                if missing_fields:
+                    raise serializers.ValidationError({
+                        field: ["This field is required."]
+                        for field in sorted(missing_fields)
+                    })
 
+        return super().to_internal_value(data)
 
     class Meta: 
         model = MenuItem 

@@ -155,3 +155,38 @@ class MenuDetailTests(APITestCase):
         item.refresh_from_db()
         self.assertEqual(item.price, Decimal("17.25"))
         self.assertEqual(item.title, "Grilled fish")
+
+    def test_put_requires_featured_field(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.put(
+            f"/api/menu-items/{item.pk}",
+            {
+                "title": "Grilled fish",
+                "price": "17.25",
+                "category_id": category.id,
+                # "featured" is deliberately missing.
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("featured", response.data)
+        item.refresh_from_db()
+        self.assertEqual(item.price, Decimal("15.50"))
+
+
+
+
+
