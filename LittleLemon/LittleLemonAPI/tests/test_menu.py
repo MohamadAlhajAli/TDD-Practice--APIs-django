@@ -1,3 +1,4 @@
+from requests import Response
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -185,6 +186,29 @@ class MenuDetailTests(APITestCase):
         self.assertIn("featured", response.data)
         item.refresh_from_db()
         self.assertEqual(item.price, Decimal("15.50"))
+
+    def test_manager_can_delete_menu_item(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.delete(f"/api/menu-items/{item.pk}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"detail": "Deleted successfully."})
+        self.assertFalse(MenuItem.objects.filter(pk=item.pk).exists())
+
+
+
 
 
 
