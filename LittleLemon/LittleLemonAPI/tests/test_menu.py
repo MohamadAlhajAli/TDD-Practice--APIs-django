@@ -40,7 +40,6 @@ class MenuListTests(APITestCase):
             },
         )
 
-
 class MenuCreateTests(APITestCase):
     def test_manager_can_create_menu_item(self):
         manager = get_user_model().objects.create_user(username="manager")
@@ -131,3 +130,28 @@ class MenuDetailTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Grilled fish")
+
+    def test_manager_can_partially_update_menu_item(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.patch(
+            f"/api/menu-items/{item.pk}",
+            {"price": "17.25"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        item.refresh_from_db()
+        self.assertEqual(item.price, Decimal("17.25"))
+        self.assertEqual(item.title, "Grilled fish")
