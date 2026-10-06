@@ -1,3 +1,4 @@
+from requests import Response
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -169,7 +170,6 @@ class MenuCreateTests(APITestCase):
                 self.assertIn(field, response.data)
                 self.assertFalse(MenuItem.objects.exists())
 
-
 class MenuDetailTests(APITestCase):
     def test_authenticated_user_can_retrieve_menu_item(self):
         user = get_user_model().objects.create_user(username="customer")
@@ -320,4 +320,186 @@ class MenuDetailTests(APITestCase):
         self.assertFalse(MenuItem.objects.filter(pk=item.pk).exists())
         self.assertFalse(Cart.objects.filter(pk=cart.pk).exists())
 
+class MenuAccessTests(APITestCase):
+    def setUp(self):
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        self.item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        self.category = category
 
+    def test_anonymous_requests_return_401(self):
+        detail = f"/api/menu-items/{self.item.pk}"
+        payload = {
+            "title": "Grilled fish",
+            "price": "15.50",
+            "featured": False,
+            "category_id": self.category.pk,
+        }
+        responses = [
+            ("list GET", self.client.get("/api/menu-items")),
+            ("list POST", self.client.post(
+                "/api/menu-items", payload, format="json"
+            )),
+            ("detail GET", self.client.get(detail)),
+            ("detail PUT", self.client.put(detail, payload, format="json")),
+            ("detail PATCH", self.client.patch(
+                detail, {"price": "17.25"}, format="json"
+            )),
+            ("detail DELETE", self.client.delete(detail)),
+        ]
+
+        for name, response in responses:
+            with self.subTest(name=name):
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_401_UNAUTHORIZED,
+                )
+
+        self.assertTrue(MenuItem.objects.filter(pk=self.item.pk).exists())
+
+    def test_customer_and_delivery_can_read_but_cannot_write(self):
+        customer = get_user_model().objects.create_user(username="customer")
+        delivery = get_user_model().objects.create_user(username="delivery")
+        delivery.groups.add(Group.objects.create(name="Delivery crew"))
+
+        detail = f"/api/menu-items/{self.item.pk}"
+        payload = {
+            "title": "Changed fish",
+            "price": "17.25",
+            "featured": True,
+            "category_id": self.category.pk,
+        }
+
+        for role, user in (("Customer", customer), ("Delivery crew", delivery)):
+            self.client.force_authenticate(user=user)
+
+            cases = [
+                ("list GET", self.client.get("/api/menu-items"), 200),
+                ("detail GET", self.client.get(detail), 200),
+                ("list POST", self.client.post(
+                    "/api/menu-items", payload, format="json"
+                ), 403),
+                ("detail PUT", self.client.put(
+                    detail, payload, format="json"
+                ), 403),
+                ("detail PATCH", self.client.patch(
+                    detail, {"price": "17.25"}, format="json"
+                ), 403),
+                ("detail DELETE", self.client.delete(detail), 403),
+            ]
+
+            for action, response, expected in cases:
+                with self.subTest(role=role, action=action):
+                    self.assertEqual(response.status_code, expected)
+
+        self.assertEqual(MenuItem.objects.count(), 1)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.title, "Grilled fish")
+        self.assertEqual(self.item.price, Decimal("15.50"))
+
+    def test_superuser_has_manager_menu_access_without_group(self):
+        admin = get_user_model().objects.create_superuser(
+            username="admin",
+            email="admin@example.com",
+            password="Lemon!River82Cloud",
+        )
+        self.assertFalse(admin.groups.exists())
+        self.client.force_authenticate(user=admin)
+
+        self.assertEqual(self.client.get("/api/menu-items").status_code, 200)
+        self.assertEqual(
+            self.client.get(f"/api/menu-items/{self.item.pk}").status_code,
+            200,
+        )
+
+        created = self.client.post(
+            "/api/menu-items",
+            {
+                "title": "Lemon tart",
+                "price": "8.50",
+                "featured": True,
+                "category_id": self.category.pk,
+            },
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        detail = f"/api/menu-items/{created.data['id']}"
+
+        updated = self.client.put(
+            detail,
+            {
+                "title": "Lemon tart",
+                "price": "9.00",
+                "featured": False,
+                "category_id": self.category.pk,
+            },
+            format="json",
+        )
+        self.assertEqual(updated.status_code, 200)
+
+        patched = self.client.patch(
+            detail, {"price": "10.00"}, format="json"
+        )
+        self.assertEqual(patched.status_code, 200)
+
+        deleted = self.client.delete(detail)
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(
+            MenuItem.objects.filter(pk=created.data["id"]).exists()
+        )
+
+    def test_unknown_menu_item_id_returns_404(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        self.client.force_authenticate(user=manager)
+
+        missing_id = self.item.pk + 1
+        detail = f"/api/menu-items/{missing_id}"
+        payload = {
+            "title": "Grilled fish",
+            "price": "15.50",
+            "featured": False,
+            "category_id": self.category.pk,
+        }
+        cases = [
+            ("GET", self.client.get(detail)),
+            ("PUT", self.client.put(detail, payload, format="json")),
+            ("PATCH", self.client.patch(
+                detail, {"price": "17.25"}, format="json"
+            )),
+            ("DELETE", self.client.delete(detail)),
+        ]
+
+        for method, response in cases:
+            with self.subTest(method=method):
+                self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        self.assertEqual(MenuItem.objects.count(), 1)
+
+    def test_menu_item_validation_rejects_bad_data(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        self.client.force_authenticate(user=manager)
+
+        invalid_payload = {
+            "title": "",
+            "price": "invalid",
+            "featured": True,
+            "category_id": self.category.pk,
+        }
+        response = self.client.post(
+            "/api/menu-items", invalid_payload, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("title", response.data)
+        self.assertIn("price", response.data)
+        self.assertTrue(response.data["title"])
+        self.assertTrue(response.data["price"])
+        self.assertFalse(MenuItem.objects.filter(title="").exists())
