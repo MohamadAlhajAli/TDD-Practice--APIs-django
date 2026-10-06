@@ -113,6 +113,21 @@ class MenuCreateTests(APITestCase):
         self.assertIn("unexpected", response.data)
         self.assertFalse(MenuItem.objects.exists())    
 
-  
+class MenuDetailTests(APITestCase):
+    def test_authenticated_user_can_retrieve_menu_item(self):
+        user = get_user_model().objects.create_user(username="customer")
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        self.client.force_authenticate(user=user)
 
+        response = self.client.get(f"/api/menu-items/{item.pk}")
 
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Grilled fish")
