@@ -503,3 +503,73 @@ class MenuAccessTests(APITestCase):
         self.assertTrue(response.data["title"])
         self.assertTrue(response.data["price"])
         self.assertFalse(MenuItem.objects.filter(title="").exists())
+
+    def test_create_defaults_featured_to_false(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Desserts", slug="desserts"
+        )
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.post(
+            "/api/menu-items",
+            {
+                "title": "Lemon cake",
+                "price": "8.50",
+                "category_id": category.pk,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        item = MenuItem.objects.get(pk=response.data["id"])
+        self.assertFalse(item.featured)
+        self.assertIs(response.data["featured"], False)
+
+    def test_create_requires_category_id(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        self.client.force_authenticate(user=manager)
+
+        response = self.client.post(
+            "/api/menu-items",
+            {"title": "Lemon cake", "price": "8.50"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("category_id", response.data)
+        self.assertEqual(MenuItem.objects.count(), 1)
+        self.assertFalse(MenuItem.objects.filter(title="Lemon cake").exists())
+
+    def test_manager_patch_rejects_invalid_fields_without_changes(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        self.client.force_authenticate(user=manager)
+
+        cases = [
+            ({"id": 999}, "id"),
+            ({"category": {"id": self.category.pk}}, "category"),
+            ({"category_id": 999999}, "category_id"),
+            ({"price": "-0.01"}, "price"),
+        ]
+
+        for payload, field in cases:
+            with self.subTest(payload=payload):
+                response = self.client.patch(
+                    f"/api/menu-items/{self.item.pk}",
+                    payload,
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn(field, response.data)
+                self.item.refresh_from_db()
+                self.assertEqual(self.item.price, Decimal("15.50"))
+                self.assertEqual(self.item.category_id, self.category.pk)
+
+        self.assertEqual(MenuItem.objects.count(), 1)
+
+
+
