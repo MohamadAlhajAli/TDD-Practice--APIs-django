@@ -1,11 +1,10 @@
-from requests import Response
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APITestCase
-from LittleLemonAPI.models import Category, MenuItem
+from LittleLemonAPI.models import Category, MenuItem, Order, OrderItem, Cart
 
 
 class MenuListTests(APITestCase):
@@ -207,10 +206,60 @@ class MenuDetailTests(APITestCase):
         self.assertEqual(response.data, {"detail": "Deleted successfully."})
         self.assertFalse(MenuItem.objects.filter(pk=item.pk).exists())
 
+    def test_menu_item_in_order_cannot_be_deleted(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        order = Order.objects.create(user=manager, total=Decimal("15.50"))
+        order_item = OrderItem.objects.create(
+            order=order,
+            menuitem=item,
+            quantity=1,
+            unit_price=Decimal("15.50"),
+            price=Decimal("15.50"),
+        )
+        self.client.force_authenticate(user=manager)
 
+        response = self.client.delete(f"/api/menu-items/{item.pk}")
 
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertTrue(MenuItem.objects.filter(pk=item.pk).exists())
+        self.assertTrue(OrderItem.objects.filter(pk=order_item.pk).exists())
+            
+    def test_deleting_menu_item_removes_its_cart_rows(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Main courses",
+            slug="main-courses",
+        )
+        item = MenuItem.objects.create(
+            title="Grilled fish",
+            price=Decimal("15.50"),
+            category=category,
+        )
+        cart = Cart.objects.create(
+            user=manager,
+            menuitem=item,
+            quantity=1,
+            unit_price=Decimal("15.50"),
+            price=Decimal("15.50"),
+        )
+        self.client.force_authenticate(user=manager)
 
+        response = self.client.delete(f"/api/menu-items/{item.pk}")
 
-
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(MenuItem.objects.filter(pk=item.pk).exists())
+        self.assertFalse(Cart.objects.filter(pk=cart.pk).exists())
 
 
