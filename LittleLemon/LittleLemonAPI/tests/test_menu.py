@@ -88,8 +88,31 @@ class MenuCreateTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertFalse(MenuItem.objects.exists())
 
+    def test_unknown_create_field_is_rejected(self):
+        manager = get_user_model().objects.create_user(username="manager")
+        manager.groups.add(Group.objects.create(name="Manager"))
+        category = Category.objects.create(
+            title="Desserts",
+            slug="desserts",
+        )
+        self.client.force_authenticate(user=manager)
 
+        response = self.client.post(
+            "/api/menu-items",
+            {
+                "title": "Lemon cake",
+                "price": "8.50",
+                "featured": True,
+                "category_id": category.id,
+                "unexpected": "not allowed",
+            },
+            format="json",
+        )
 
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("unexpected", response.data)
+        self.assertFalse(MenuItem.objects.exists())    
 
+  
 
 

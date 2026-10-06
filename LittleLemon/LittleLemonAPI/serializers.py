@@ -1,3 +1,4 @@
+from dataclasses import field
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 from LittleLemonAPI.models import MenuItem, Category 
@@ -36,6 +37,20 @@ class MenuItemSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     
+    def to_internal_value(self, data):
+        if isinstance(data, dict):
+            allowed_fields = {"title", "price", "featured", "category_id"}
+            unexpected_fields = set(data) - allowed_fields
+
+            if unexpected_fields:
+                raise serializers.ValidationError({
+                    field: ["This field is not allowed."]
+                    for field in sorted(unexpected_fields)
+                })
+
+        return super().to_internal_value(data)
+
+
     class Meta: 
         model = MenuItem 
         fields = ["id", "title", "price", "featured", "category", "category_id"]  
