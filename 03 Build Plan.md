@@ -1,9 +1,9 @@
 # Little Lemon API — Step-by-Step Build Plan
 
 **Companions:** `01 SRS - Software Requirements Specification.md` and `02 Design Document.md`
-**Version:** 1.2
-**Reviewed:** 2026-09-23
-**Status:** Steps 0–2 complete; Step 3 implemented and verified, awaiting review
+**Version:** 1.3
+**Reviewed:** 2026-10-06
+**Status:** Steps 0–3 complete; Step 4 implemented and verified, awaiting review
 
 **How we will work:** explain one small behavior, write and run a failing test, implement the minimum to pass, then refactor with tests passing. Work through one step at a time and pause for your next instruction. Each feature also practices the GitHub issue → branch → commit → pull request → review → merge workflow. Step 12 is a final audit; tests lead development from Step 1 onward.
 
@@ -18,8 +18,8 @@ The SRS defines behavior. If a course requirement changes a decision, update all
 | 0 | Environment and scaffold | — | Completed | Python 3.14.4, Django 5.2.17; locked dependencies, environment setup, migrations, and GitHub CI configured |
 | 1 | Models, migrations, admin | 0 | Completed | 29 model tests and six admin tests; migrations and manual admin checks passed; sample catalog created locally |
 | 2 | Djoser registration, tokens, login page | 1 | Completed | 17 authentication/page tests, no migration drift, browser login checks; merged [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) for [issue #13](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/13) |
-| 3 | Roles and permissions | 1, 2 | Implemented; awaiting review | 64 tests pass overall, including 12 role/permission tests; local users `ana`, `ben`, `maria`, `sam`, and `lee` resolved to expected roles; [issue #15](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/15) |
-| 4 | Menu endpoints | 1, 3 | ☐ Not started | — |
+| 3 | Roles and permissions | 1, 2 | Completed | 12 role/permission tests; local users `ana`, `ben`, `maria`, `sam`, and `lee` resolved to expected roles; merged [PR #16](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/16) for [issue #15](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/15) |
+| 4 | Menu endpoints | 1, 3 | Implemented; awaiting review | 20 menu tests cover role/method access, validation, and deletion rules; [PR #18](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/18) for [issue #17](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/17) |
 | 5 | Group management | 3 | ☐ Not started | — |
 | 6 | Cart endpoints | 1, 3, 4 | ☐ Not started | — |
 | 7 | Order placement | 6 | ☐ Not started | — |
@@ -47,7 +47,7 @@ Use Django TestCase/APITestCase and plain unittest assertions initially. Avoid a
 
 ## GitHub Practice Before Step 0
 
-**Repository setup progress:** this folder is connected to [TDD-Practice--APIs-django](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django), with `main` tracking `origin/main`. Planning and scaffold work were merged, preserving the existing history. Root ignore rules, environment configuration, issue/PR templates, and CI are in place. Steps 0–1 are complete. Authentication work is on `feat/13-authentication`, with [PR #14](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/14) awaiting merge. We use Git Bash and the GitHub website for the guided workflow.
+**Repository setup progress:** this folder is connected to [TDD-Practice--APIs-django](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django), with `main` tracking `origin/main`. Root ignore rules, environment configuration, issue/PR templates, and CI are in place. Steps 0–3 are merged; Step 4 is under review in [PR #18](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/18). We use Git Bash and the GitHub website for the guided workflow.
 
 **Guided practice:** explain each command, what it changes and what output to inspect. Give the user small command batches to execute and help interpret the output. Keep GitHub exercises visible instead of silently completing the entire collaboration workflow. The user can ask the assistant to execute a batch when preferred.
 
@@ -258,12 +258,12 @@ The role resolver and three permission classes are covered by `test_permissions.
 
 **Acceptance checks**
 
-- ☐ All authenticated roles read menu list/detail → 200; anonymous → 401
-- ☐ Manager creates → 201, updates/deletes → 200; Customer/Delivery writes → 403
-- ☐ Invalid title/price/category and unknown fields → 400
-- ☐ Unknown menu ID → 404
-- ☐ Deleting an item referenced by an order → 400 with history intact
-- ☐ Deleting an item referenced only by cart rows removes those rows
+- [x] All authenticated roles read menu list/detail → 200; anonymous → 401
+- [x] Manager creates → 201, updates/deletes → 200; Customer/Delivery writes → 403
+- [x] Invalid title/price/category and unknown fields → 400
+- [x] Unknown menu ID → 404
+- [x] Deleting an item referenced by an order → 400 with history intact
+- [x] Deleting an item referenced only by cart rows removes those rows
 
 **Checkpoint:** why should a nested category be read-only while category_id is writable?
 
@@ -525,4 +525,4 @@ Debug Toolbar is an optional aid for suitable HTML responses; automated query me
 - ☐ Application behaviors were developed through observed Red → Green → Refactor cycles
 - ☐ GitHub issues, branches, reviewed PRs and passing CI record the development history
 
-**Next action:** commit and push the Step 3 progress update on `feat/15-roles-permissions`, open a pull request for issue #15, review CI and the diff, then merge. Synchronize local `main` before starting Step 4 on a new issue branch.
+**Next action:** review and merge [PR #18](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/pull/18) for [issue #17](https://github.com/MohamadAlhajAli/TDD-Practice--APIs-django/issues/17) after CI passes. Synchronize local `main`, then start Step 5 group management on a new issue branch.
